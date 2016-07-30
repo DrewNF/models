@@ -85,6 +85,7 @@ import glob
 import os.path
 import sys
 import xml.etree.ElementTree as ET
+import csv
 
 
 class BoundingBox(object):
@@ -187,59 +188,65 @@ if __name__ == '__main__':
   skipped_files = 0
   saved_boxes = 0
   saved_files = 0
-  for file_index, one_file in enumerate(xml_files):
-    # Example: <...>/n06470073/n00141669_6790.xml
-    label = os.path.basename(os.path.dirname(one_file))
+  
+  with open('dataset_summary.csv', 'w') as summary:
+    summary_writer = csv.writer(summary)
+    #summary_writer.writerow(["JPEG file name", "xmin", "ymin", "xmax", "ymax"])
+    for file_index, one_file in enumerate(xml_files):
+        # Example: <...>/n06470073/n00141669_6790.xml
+        label = os.path.basename(os.path.dirname(one_file))
 
-    # Determine if the annotation is from an ImageNet Challenge label.
-    if labels is not None and label not in labels:
-      skipped_files += 1
-      continue
+        # Determine if the annotation is from an ImageNet Challenge label.
+        if labels is not None and label not in labels:
+          skipped_files += 1
+          continue
 
-    bboxes = ProcessXMLAnnotation(one_file)
-    assert bboxes is not None, 'No bounding boxes found in ' + one_file
+        bboxes = ProcessXMLAnnotation(one_file)
+        assert bboxes is not None, 'No bounding boxes found in ' + one_file
 
-    found_box = False
-    for bbox in bboxes:
-      if labels is not None:
-        if bbox.label != label:
-          # Note: There is a slight bug in the bounding box annotation data.
-          # Many of the dog labels have the human label 'Scottish_deerhound'
-          # instead of the synset ID 'n02092002' in the bbox.label field. As a
-          # simple hack to overcome this issue, we only exclude bbox labels
-          # *which are synset ID's* that do not match original synset label for
-          # the XML file.
-          if bbox.label in labels:
+        found_box = False
+        for bbox in bboxes:
+          if labels is not None:
+            if bbox.label != label:
+              # Note: There is a slight bug in the bounding box annotation data.
+              # Many of the dog labels have the human label 'Scottish_deerhound'
+              # instead of the synset ID 'n02092002' in the bbox.label field. As a
+              # simple hack to overcome this issue, we only exclude bbox labels
+              # *which are synset ID's* that do not match original synset label for
+              # the XML file.
+              if bbox.label in labels:
+                skipped_boxes += 1
+                continue
+
+          # Guard against improperly specified boxes.
+          if (bbox.xmin_scaled >= bbox.xmax_scaled or
+              bbox.ymin_scaled >= bbox.ymax_scaled):
             skipped_boxes += 1
             continue
 
-      # Guard against improperly specified boxes.
-      if (bbox.xmin_scaled >= bbox.xmax_scaled or
-          bbox.ymin_scaled >= bbox.ymax_scaled):
-        skipped_boxes += 1
-        continue
+          # Note bbox.filename occasionally contains '%s' in the name. This is
+          # data set noise that is fixed by just using the basename of the XML file.
+          image_filename = os.path.splitext(os.path.basename(one_file))[0]
+          print('%s.JPEG,%.4f,%.4f,%.4f,%.4f' %
+                (image_filename,
+                 bbox.xmin_scaled, bbox.ymin_scaled,
+                 bbox.xmax_scaled, bbox.ymax_scaled))
+          summary_writer.writerow([image_filename+'.JPEG',  bbox.xmin_scaled, bbox.ymin_scaled,bbox.xmax_scaled, bbox.ymax_scaled])
 
-      # Note bbox.filename occasionally contains '%s' in the name. This is
-      # data set noise that is fixed by just using the basename of the XML file.
-      image_filename = os.path.splitext(os.path.basename(one_file))[0]
-      print('%s.JPEG,%.4f,%.4f,%.4f,%.4f' %
-            (image_filename,
-             bbox.xmin_scaled, bbox.ymin_scaled,
-             bbox.xmax_scaled, bbox.ymax_scaled))
 
-      saved_boxes += 1
-      found_box = True
-    if found_box:
-      saved_files += 1
-    else:
-      skipped_files += 1
+          saved_boxes += 1
+          found_box = True
+        if found_box:
+          saved_files += 1
+        else:
+          skipped_files += 1
 
-    if not file_index % 5000:
-      print('--> processed %d of %d XML files.' %
-            (file_index + 1, len(xml_files)),
-            file=sys.stderr)
-      print('--> skipped %d boxes and %d XML files.' %
-            (skipped_boxes, skipped_files), file=sys.stderr)
+        if not file_index % 5000:
+          print('--> processed %d of %d XML files.' %
+                (file_index + 1, len(xml_files)),
+                file=sys.stderr)
+          print('--> skipped %d boxes and %d XML files.' %
+                (skipped_boxes, skipped_files), file=sys.stderr)
 
   print('Finished processing %d XML files.' % len(xml_files), file=sys.stderr)
   print('Skipped %d XML files not in ImageNet Challenge.' % skipped_files,

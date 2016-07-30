@@ -120,7 +120,7 @@ tf.app.flags.DEFINE_integer('num_threads', 8,
 # each synset contained in the file to an integer (based on the alphabetical
 # ordering). See below for details.
 tf.app.flags.DEFINE_string('labels_file',
-                           'imagenet_lsvrc_2015_synsets.txt',
+                           'map_vid.txt',
                            'Labels file')
 
 # This file containing mapping from synset to human-readable label.
@@ -133,7 +133,7 @@ tf.app.flags.DEFINE_string('labels_file',
 # where each line corresponds to a unique mapping. Note that each line is
 # formatted as <synset>\t<human readable label>.
 tf.app.flags.DEFINE_string('imagenet_metadata_file',
-                           'imagenet_metadata.txt',
+                           'meta_vid.txt',
                            'ImageNet metadata file')
 
 # This file is the output of process_bounding_box.py
@@ -149,7 +149,7 @@ tf.app.flags.DEFINE_string('imagenet_metadata_file',
 # Note that there might exist mulitple bounding box annotations associated
 # with an image file.
 tf.app.flags.DEFINE_string('bounding_box_file',
-                           './imagenet_2012_bounding_boxes.csv',
+                           './dataset_summary.csv',
                            'Bounding box file')
 
 FLAGS = tf.app.flags.FLAGS
@@ -660,6 +660,7 @@ def _build_bounding_box_lookup(bounding_box_file):
   for l in lines:
     if l:
       parts = l.split(',')
+      # print('Successfully splitted p1: %s p2: %s p3: %s p4: %s ' % (parts[1],parts[2],parts[3],parts[4]))
       assert len(parts) == 5, ('Failed to parse: %s' % l)
       filename = parts[0]
       xmin = float(parts[1])
@@ -689,12 +690,13 @@ def main(unused_argv):
 
   # Build a map from synset to human-readable label.
   synset_to_human = _build_synset_lookup(FLAGS.imagenet_metadata_file)
+  print(synset_to_human)
   image_to_bboxes = _build_bounding_box_lookup(FLAGS.bounding_box_file)
 
   # Run it!
-  _process_dataset('validation', FLAGS.validation_directory,
-                   FLAGS.validation_shards, synset_to_human, image_to_bboxes)
-  _process_dataset('train', FLAGS.train_directory, FLAGS.train_shards,
+  # _process_dataset('validation', FLAGS.validation_directory,
+  #                  FLAGS.validation_shards, synset_to_human, image_to_bboxes)
+  _process_dataset('train', './dataset/data/', FLAGS.train_shards,
                    synset_to_human, image_to_bboxes)
 
 
