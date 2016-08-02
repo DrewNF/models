@@ -323,7 +323,7 @@ def train(dataset):
       restorer.restore(sess, FLAGS.pretrained_model_checkpoint_path)
       print('%s: Pre-trained model restored from %s' %
             (datetime.now(), FLAGS.pretrained_model_checkpoint_path))
-
+    tf.train.write_graph(sess.graph_def, "/tmp/output", "inception_vid.pb", False) #proto
     # Start the queue runners.
     tf.train.start_queue_runners(sess=sess)
 
