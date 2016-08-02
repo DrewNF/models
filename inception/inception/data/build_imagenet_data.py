@@ -96,11 +96,11 @@ import threading
 import numpy as np
 import tensorflow as tf
 
-tf.app.flags.DEFINE_string('train_directory', '/dataset/data',
+tf.app.flags.DEFINE_string('train_directory', 'data',
                            'Training data directory')
-tf.app.flags.DEFINE_string('validation_directory', '/dataset/data',
+tf.app.flags.DEFINE_string('validation_directory', 'data',
                            'Validation data directory')
-tf.app.flags.DEFINE_string('output_directory', '/tmp/train/',
+tf.app.flags.DEFINE_string('output_directory', '/tmp/',
                            'Output data directory')
 
 tf.app.flags.DEFINE_integer('train_shards', 1024,
@@ -696,7 +696,7 @@ def main(unused_argv):
   # Run it!
   # _process_dataset('validation', FLAGS.validation_directory,
   #                  FLAGS.validation_shards, synset_to_human, image_to_bboxes)
-  _process_dataset('train', './dataset/data/', FLAGS.train_shards,
+  _process_dataset('train', 'data/', FLAGS.train_shards,
                    synset_to_human, image_to_bboxes)
 
 
