@@ -24,9 +24,10 @@ height=480
 def get_ordered_name_XML(path_bbox_dataset):
 
     a = []
-    for s in os.listdir(path_bbox_dataset):
-         if os.path.isfile(os.path.join(path_bbox_dataset, s)) & s.endswith('.xml'):
-            a.append(os.path.join(path_bbox_dataset, s))
+	for path, subdirs, files in os.walk(path_bbox_dataset):
+        for s in files:
+	         if os.path.isfile(os.path.join(path, s)) & s.endswith('.xml'):
+	            a.append(os.path.join(path, s))
     a.sort(key=lambda s: s)
     return a
 
